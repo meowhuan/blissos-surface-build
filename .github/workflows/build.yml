@@ -65,6 +65,10 @@ jobs:
           export http_proxy=http://192.168.31.32:7890
           . build/envsetup.sh
           lunch bliss_x86_64-ap4a-userdebug < /dev/null
+          # kernel.mk kmodule 规则以 obj/kmodule/<mod> 目录为 ninja 输出；
+          # 增量构建时目录已存在会导致 ninja 报 "outputs should be files, not directories"。
+          # 构建前清空即可（重新构建这些外部内核模块，每次约几十秒）。
+          rm -rf out/target/product/x86_64/obj/kmodule
           make blissify iso_img -j32 2>&1 | tail -50
           echo "BUILD_EXIT=${PIPESTATUS[0]}"
           exit ${PIPESTATUS[0]}
