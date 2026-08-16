@@ -1,0 +1,139 @@
+name: Build BlissOS Surface ISO
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: '构建变体 (vanilla / gapps)'
+        required: true
+        default: 'vanilla'
+        type: choice
+        options:
+          - vanilla
+          - gapps
+      version:
+        description: '发布版本名（如 r12k，Release tag 用）'
+        required: false
+        default: 'r12k'
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, x64, blissos-build]
+    timeout-minutes: 240
+    steps:
+      - name: Checkout 本仓库（含 game-compat 热修产物）
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 环境准备
+        run: |
+          df -h /
+          nproc
+          free -g | head -2
+          whoami
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+
+      - name: 同步补丁仓库到构建树
+        shell: bash
+        run: |
+          cd /home/meowhuan/blissos
+          # 每个 fork 仓库同步到 meowhuan 分支（r12e-meowhuan）
+          # ⚠️ 必须用 meowhuan fork：Surface Pro 9 定制（ssam/lid/iptsd/内核等）只存在于 fork，
+          #    BlissOS 上游仓库没有这些改动，直接拉上游会丢失全部定制。
+          sync_repo() {
+            local path="$1"
+            if [ -d "$path/.git" ]; then
+              git -C "$path" fetch origin r12e-meowhuan --quiet
+              git -C "$path" checkout r12e-meowhuan --quiet 2>/dev/null || \
+              git -C "$path" reset --hard FETCH_HEAD --quiet
+              echo "synced: $path -> $(git -C "$path" rev-parse --short HEAD)"
+            else
+              echo "skip (no .git): $path"
+            fi
+          }
+          sync_repo packages/apps/Blissify
+          sync_repo device/generic/common
+          sync_repo external/iptsd
+          sync_repo frameworks/base
+          sync_repo vendor/bliss
+          sync_repo build/soong
+          sync_repo packages/apps/BlissSystemUI
+          sync_repo packages/apps/BlissUpdater
+          sync_repo packages/apps/LMOFreeform
+          sync_repo packages/apps/paranoidsense
+          sync_repo kernel_common
+          sync_repo packages/apps/Launcher3
+
+      - name: 应用游戏兼容性热修（构建前）
+        shell: bash
+        run: |
+          cd /home/meowhuan/blissos
+          bash "$GITHUB_WORKSPACE/scripts/apply_game_compat.sh"
+
+      - name: 构建 ISO
+        shell: bash
+        run: |
+          cd /home/meowhuan/blissos
+          export BLISS_BUILD_VARIANT=${{ inputs.variant }}
+          export BOARD_IS_SURFACE_BUILD=true
+          export ANDROID_USE_NDK_TRANSLATION=true
+          export https_proxy=http://192.168.31.32:7890
+          export http_proxy=http://192.168.31.32:7890
+          . build/envsetup.sh
+          lunch bliss_x86_64-ap4a-userdebug < /dev/null
+          make blissify iso_img -j32 2>&1 | tail -50
+          echo "BUILD_EXIT=${PIPESTATUS[0]}"
+          exit ${PIPESTATUS[0]}
+
+      - name: libvulkan API36 补救（构建后必需）
+        shell: bash
+        run: |
+          cd /home/meowhuan/blissos
+          GC="$GITHUB_WORKSPACE/game-compat/libvulkan.so.api36"
+          MD5=$(md5sum out/target/product/x86_64/system/lib64/libvulkan.so | cut -d' ' -f1)
+          echo "pre-fix libvulkan md5: $MD5"
+          if [ "${MD5:0:8}" = "59fb1c2b" ]; then
+            echo "OK libvulkan 已为 API36"
+          else
+            echo "!! libvulkan 为 API35，应用 API36 补救..."
+            cp "$GC" out/target/product/x86_64/system/lib64/libvulkan.so
+            cp "$GC" obj/PACKAGING/target_files_intermediates/bliss_x86_64-target_files/SYSTEM/lib64/libvulkan.so
+            export BOARD_IS_SURFACE_BUILD=true
+            export ANDROID_USE_NDK_TRANSLATION=true
+            . build/envsetup.sh && lunch bliss_x86_64-ap4a-userdebug < /dev/null
+            make iso_img -j32 2>&1 | tail -30
+            echo "re-iso exit=$?"
+          fi
+          MD5=$(md5sum out/target/product/x86_64/system/lib64/libvulkan.so | cut -d' ' -f1)
+          echo "post-fix libvulkan md5: $MD5"
+
+      - name: 校验 libndk host-call 补丁
+        shell: bash
+        run: |
+          cd /home/meowhuan/blissos
+          MD5=$(md5sum out/target/product/x86_64/system/lib64/libndk_translation.so | cut -d' ' -f1)
+          echo "libndk md5: $MD5"
+          case "$MD5" in
+            d986d236*) echo "OK host-call 补丁已包含" ;;
+            *) echo "!! libndk 非补丁版，游戏兼容性不可用" ;;
+          esac
+
+      - name: 打包发布
+        shell: bash
+        run: |
+          cd /home/meowhuan/blissos/out/target/product/x86_64
+          ISO=$(ls -t Bliss-*.iso | head -1)
+          echo "ISO=$ISO"
+          SHA256=$(sha256sum "$ISO" | cut -d' ' -f1)
+          echo "SHA256=$SHA256"
+          VER=${{ inputs.version }}
+          gh release create "$VER" "$ISO" \
+            --repo meowhuan/blissos-surface-build \
+            --title "BlissOS Surface ${{ inputs.variant }} $VER" \
+            --notes "variant: ${{ inputs.variant }}
+ISO: $ISO
+SHA256: $SHA256
+构建时间: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+⚠️ 仅适配 Surface Pro 9；游戏按逐游戏适配处理（见仓库 README）" || true
+          ls -la "$ISO"
