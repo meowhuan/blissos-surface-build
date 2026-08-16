@@ -123,8 +123,26 @@ jobs:
           Build time: $(date -u +%Y-%m-%dT%H:%M:%SZ)
           NOTE: Surface Pro 9 only; per-game adaptation (see repo README)
           EOF
-          gh release create "$VER" "$ISO" \
-            --repo meowhuan/blissos-surface-build \
-            --title "BlissOS Surface ${{ inputs.variant }} $VER" \
-            --notes-file /tmp/release_notes.md || true
+          SIZE=$(stat -c%s "$ISO")
+          if [ "$SIZE" -ge 2147483648 ]; then
+            echo "ISO > 2GB (GitHub asset limit), splitting..."
+            rm -rf /tmp/iso_parts && mkdir -p /tmp/iso_parts
+            split -b 1999M -d -a 2 "$ISO" /tmp/iso_parts/$ISO.
+            cat >> /tmp/release_notes.md <<EOF2
+
+          ISO is >2GB (GitHub 2GB per-asset limit), uploaded as parts.
+          Recombine (Linux/Mac): cat $ISO.* > $ISO
+          Recombine (Windows): type $ISO.00 $ISO.01 ... > $ISO
+          Then verify: sha256sum $ISO
+          EOF2
+            gh release create "$VER" /tmp/iso_parts/* \
+              --repo meowhuan/blissos-surface-build \
+              --title "BlissOS Surface ${{ inputs.variant }} $VER" \
+              --notes-file /tmp/release_notes.md || true
+          else
+            gh release create "$VER" "$ISO" \
+              --repo meowhuan/blissos-surface-build \
+              --title "BlissOS Surface ${{ inputs.variant }} $VER" \
+              --notes-file /tmp/release_notes.md || true
+          fi
           ls -la "$ISO"
