@@ -34,36 +34,22 @@ jobs:
           whoami
           echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
 
-      - name: 同步补丁仓库到构建树
+      - name: 记录构建状态（构建机本地仓库即源码真相，不重置）
         shell: bash
         run: |
           cd /home/meowhuan/blissos
-          # 每个 fork 仓库同步到 meowhuan 分支（r12e-meowhuan）
-          # ⚠️ 必须用 meowhuan fork：Surface Pro 9 定制（ssam/lid/iptsd/内核等）只存在于 fork，
-          #    BlissOS 上游仓库没有这些改动，直接拉上游会丢失全部定制。
-          sync_repo() {
-            local path="$1"
-            if [ -d "$path/.git" ]; then
-              git -C "$path" fetch origin r12e-meowhuan --quiet
-              git -C "$path" checkout r12e-meowhuan --quiet 2>/dev/null || \
-              git -C "$path" reset --hard FETCH_HEAD --quiet
-              echo "synced: $path -> $(git -C "$path" rev-parse --short HEAD)"
-            else
-              echo "skip (no .git): $path"
+          # 构建机本地仓库就是我们的工作副本（包含未推改动的现场），直接据此构建。
+          # 这里仅记录各仓库 HEAD，供 Release 说明/排查用。
+          echo "== 各仓库状态 =="
+          for p in packages/apps/Blissify device/generic/common frameworks/base vendor/bliss build/soong \
+                   packages/apps/BlissSystemUI packages/apps/BlissUpdater packages/apps/LMOFreeform \
+                   packages/apps/Launcher3 kernel/x86/surface; do
+            if [ -d "$p/.git" ]; then
+              printf '%-40s %-12s %s\n' "$p" "$(git -C "$p" branch --show-current | head -c12)" "$(git -C "$p" rev-parse --short HEAD)"
             fi
-          }
-          sync_repo packages/apps/Blissify
-          sync_repo device/generic/common
-          sync_repo external/iptsd
-          sync_repo frameworks/base
-          sync_repo vendor/bliss
-          sync_repo build/soong
-          sync_repo packages/apps/BlissSystemUI
-          sync_repo packages/apps/BlissUpdater
-          sync_repo packages/apps/LMOFreeform
-          sync_repo packages/apps/paranoidsense
-          sync_repo kernel_common
-          sync_repo packages/apps/Launcher3
+          done
+          echo "== 子模块 =="
+          git -C device/generic/common submodule status 2>/dev/null | head
 
       - name: 应用游戏兼容性热修（构建前）
         shell: bash
@@ -76,6 +62,7 @@ jobs:
         run: |
           cd /home/meowhuan/blissos
           export BLISS_BUILD_VARIANT=${{ inputs.variant }}
+          export BLISS_RELEASE_VERSION=${{ inputs.version }}
           export BOARD_IS_SURFACE_BUILD=true
           export ANDROID_USE_NDK_TRANSLATION=true
           export https_proxy=http://192.168.31.32:7890
