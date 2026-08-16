@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       variant:
-        description: '鏋勫缓鍙樹綋 (vanilla / gapps)'
+        description: 'Build variant: vanilla / gapps'
         required: true
         default: 'vanilla'
         type: choice
@@ -12,7 +12,7 @@ on:
           - vanilla
           - gapps
       version:
-        description: '鍙戝竷鐗堟湰鍚嶏紙濡?r12k锛孯elease tag 鐢級'
+        description: 'Release version name (e.g. r12k, used for Release tag)'
         required: false
         default: 'r12k'
 
@@ -21,11 +21,12 @@ jobs:
     runs-on: [self-hosted, linux, x64, blissos-build]
     timeout-minutes: 240
     steps:
-      - name: Checkout 鏈粨搴擄紙鍚?game-compat 鐑慨浜х墿锛?        uses: actions/checkout@v4
+      - name: Checkout this repo (game-compat artifacts)
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: 鐜鍑嗗
+      - name: Environment
         run: |
           df -h /
           nproc
@@ -33,10 +34,10 @@ jobs:
           whoami
           echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
 
-      - name: 璁板綍鏋勫缓鐘舵€侊紙鏋勫缓鏈烘湰鍦颁粨搴撳嵆婧愮爜鐪熺浉锛屼笉閲嶇疆锛?        shell: bash
+      - name: Record repo HEADs (build machine local repos are source of truth; do NOT reset)
+        shell: bash
         run: |
           cd /home/meowhuan/blissos
-          # 鏋勫缓鏈烘湰鍦颁粨搴撳氨鏄垜浠殑宸ヤ綔鍓湰锛堝寘鍚湭鎺ㄦ敼鍔ㄧ殑鐜板満锛夛紝鐩存帴鎹鏋勫缓銆?          # 杩欓噷浠呰褰曞悇浠撳簱 HEAD锛屼緵 Release 璇存槑/鎺掓煡鐢ㄣ€?          echo "== 鍚勪粨搴撶姸鎬?=="
           for p in packages/apps/Blissify device/generic/common frameworks/base vendor/bliss build/soong \
                    packages/apps/BlissSystemUI packages/apps/BlissUpdater packages/apps/LMOFreeform \
                    packages/apps/Launcher3 kernel/x86/surface; do
@@ -44,16 +45,15 @@ jobs:
               printf '%-40s %-12s %s\n' "$p" "$(git -C "$p" branch --show-current | head -c12)" "$(git -C "$p" rev-parse --short HEAD)"
             fi
           done
-          echo "== 瀛愭ā鍧?=="
           git -C device/generic/common submodule status 2>/dev/null | head
 
-      - name: 搴旂敤娓告垙鍏煎鎬х儹淇紙鏋勫缓鍓嶏級
+      - name: Apply game-compat pre-build hotfix
         shell: bash
         run: |
           cd /home/meowhuan/blissos
           bash "$GITHUB_WORKSPACE/scripts/apply_game_compat.sh"
 
-      - name: 鏋勫缓 ISO
+      - name: Build ISO
         shell: bash
         run: |
           cd /home/meowhuan/blissos
@@ -69,16 +69,17 @@ jobs:
           echo "BUILD_EXIT=${PIPESTATUS[0]}"
           exit ${PIPESTATUS[0]}
 
-      - name: libvulkan API36 琛ユ晳锛堟瀯寤哄悗蹇呴渶锛?        shell: bash
+      - name: libvulkan API36 recovery (post-build required)
+        shell: bash
         run: |
           cd /home/meowhuan/blissos
           GC="$GITHUB_WORKSPACE/game-compat/libvulkan.so.api36"
           MD5=$(md5sum out/target/product/x86_64/system/lib64/libvulkan.so | cut -d' ' -f1)
           echo "pre-fix libvulkan md5: $MD5"
           if [ "${MD5:0:8}" = "59fb1c2b" ]; then
-            echo "OK libvulkan 宸蹭负 API36"
+            echo "OK libvulkan already API36"
           else
-            echo "!! libvulkan 涓?API35锛屽簲鐢?API36 琛ユ晳..."
+            echo "!! libvulkan is API35, applying API36 recovery..."
             cp "$GC" out/target/product/x86_64/system/lib64/libvulkan.so
             cp "$GC" obj/PACKAGING/target_files_intermediates/bliss_x86_64-target_files/SYSTEM/lib64/libvulkan.so
             export BOARD_IS_SURFACE_BUILD=true
@@ -90,18 +91,18 @@ jobs:
           MD5=$(md5sum out/target/product/x86_64/system/lib64/libvulkan.so | cut -d' ' -f1)
           echo "post-fix libvulkan md5: $MD5"
 
-      - name: 鏍￠獙 libndk host-call 琛ヤ竵
+      - name: Verify libndk host-call patch
         shell: bash
         run: |
           cd /home/meowhuan/blissos
           MD5=$(md5sum out/target/product/x86_64/system/lib64/libndk_translation.so | cut -d' ' -f1)
           echo "libndk md5: $MD5"
           case "$MD5" in
-            d986d236*) echo "OK host-call 琛ヤ竵宸插寘鍚? ;;
-            *) echo "!! libndk 闈炶ˉ涓佺増锛屾父鎴忓吋瀹规€т笉鍙敤" ;;
+            d986d236*) echo "OK host-call patch included" ;;
+            *) echo "!! libndk NOT patched, game compatibility unavailable" ;;
           esac
 
-      - name: 鎵撳寘鍙戝竷
+      - name: Publish release
         shell: bash
         run: |
           cd /home/meowhuan/blissos/out/target/product/x86_64
@@ -116,6 +117,6 @@ jobs:
             --notes "variant: ${{ inputs.variant }}
 ISO: $ISO
 SHA256: $SHA256
-鏋勫缓鏃堕棿: $(date -u +%Y-%m-%dT%H:%M:%SZ)
-鈿狅笍 浠呴€傞厤 Surface Pro 9锛涙父鎴忔寜閫愭父鎴忛€傞厤澶勭悊锛堣浠撳簱 README锛? || true
+Build time: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+NOTE: Surface Pro 9 only; per-game adaptation (see repo README)" || true
           ls -la "$ISO"
