@@ -1,86 +1,71 @@
 # blissos-surface-build
 
-**BlissOS Surface Pro 9 定制版 ISO 构建与发布仓库**（GitHub Actions + 构建机 self-hosted runner）。
+**BlissOS Surface Pro 9 瀹氬埗鐗?ISO 鏋勫缓涓庡彂甯冧粨搴?*锛圙itHub Actions + 鏋勫缓鏈?self-hosted runner锛夈€?
+> 鈿狅笍 **浠呴拡瀵?Microsoft Surface Pro 9 閫傞厤銆傚叾瀹冭澶囧潎鏈祴璇曪紝澶ф鐜囨棤娉曠洿鎺ヤ娇鐢紝璇峰嬁鍦ㄩ潪 SP9 璁惧涓婂畨瑁呫€?*
 
-> ⚠️ **仅针对 Microsoft Surface Pro 9 适配。其它设备均未测试，大概率无法直接使用，请勿在非 SP9 设备上安装。**
+## 杩欐槸浠€涔?
+鎶?BlissOS锛圓ndroid-x86/BlissRoms锛夊畾鍒朵负鑳藉湪 **Surface Pro 9** 涓婂畬鏁村伐浣滅殑绯荤粺锛屽苟鑷姩鏋勫缓銆佸彂甯?ISO锛?
+- 鍏呯數鑷?100%锛堢鐢?EC Smart Charging锛夈€佽摑鐗欍€佺洅鐩栦紤鐪犮€侀攣灞忓瘑鐮併€佽Е鎽搞€佺浉鏈猴紙鍓嶆憚 OV5693 鍑哄抚锛夌瓑宸查€傞厤
+- 閫氳繃 **ndk_translation (berberis) 杞瘧灞?*杩愯 arm64 搴旂敤/娓告垙
+- 鑷姩鏋勫缓锛歚workflow_dispatch` 閫?vanilla/gapps 鍙樹綋 鈫?鍚屾琛ヤ竵浠撳簱 鈫?鏋勫缓 鈫?鏍￠獙 鈫?鍙戝竷 ISO 鍒?GitHub Release
 
-## 这是什么
+## 馃幃 娓告垙鍏煎鎬э細鎸?閫愭父鎴忛€傞厤"澶勭悊锛堥噸瑕侊級
 
-把 BlissOS（Android-x86/BlissRoms）定制为能在 **Surface Pro 9** 上完整工作的系统，并自动构建、发布 ISO：
+鏈郴缁熸病鏈?涓€濂楄浆璇戝眰閫氬悆鎵€鏈夋父鎴?鐨勯摱寮广€傛瘡娆?arm64 娓告垙閮藉彲鑳藉湪 berberis 杞瘧灞備笂閬囧埌**鍚勮嚜涓嶅悓鐨?*鍏煎鎬ч棶棰橈紝闇€瑕?*閫愭父鎴忓崟鐙€傞厤**銆傚綋鍓嶅疄娴嬶紙2026-08-16锛岃澶?r12j + 鐑慨锛夛細
 
-- 充电至 100%（禁用 EC Smart Charging）、蓝牙、盒盖休眠、锁屏密码、触摸、相机（前摄 OV5693 出帧）等已适配
-- 通过 **ndk_translation (berberis) 转译层**运行 arm64 应用/游戏
-- 自动构建：`workflow_dispatch` 选 vanilla/gapps 变体 → 同步补丁仓库 → 构建 → 校验 → 发布 ISO 到 GitHub Release
-
-## 🎮 游戏兼容性：按"逐游戏适配"处理（重要）
-
-本系统没有"一套转译层通吃所有游戏"的银弹。每款 arm64 游戏都可能在 berberis 转译层上遇到**各自不同的**兼容性问题，需要**逐游戏单独适配**。当前实测（2026-08-16，设备 r12j + 热修）：
-
-| 游戏 | 包名 | 状态 | 说明 |
+| 娓告垙 | 鍖呭悕 | 鐘舵€?| 璇存槑 |
 |---|---|---|---|
-| 明日方舟 | `com.hypergryph.arknights` | ✅ 可运行 | 修复 ① libvulkan API36 符号（zygote 预载）；② berberis `HandleNoExec` host-call 补丁（U8SDK libsmsdk 混淆代码直接调用 host 库 `libnativebridge::NativeBridgeError`）。实测运行 5+ 分钟进入游戏逻辑（更新服务器查询成功） |
-| 王者荣耀 | `com.tencent.tmgp.sgame` | ❌ 待适配 | `Guest call didn't restore sp`（berberis guest-call 栈指针恢复校验失败，期望/实际差 0x10）。已推进到 GCloudCore/TDM/MSDK/Apollo 初始化完成 |
-| Minecraft | `com.mojang.minecraftpe` | ❌ 待适配 | 宿主 SIGSEGV(SEGV_ACCERR) 执行 `libminecraftpe.so` 只读不可执行段（offset 0x720bef4），发生在 SwappyDisplayManager（交换链）初始化后 |
-| 和平精英 | `com.tencent.tmgp.pubgmhd` | ❌ 待适配 | 主进程静默 ~22s 后 **clean exit(0)**（子进程 SIGABRT），疑似反作弊/模拟器检测后自终止，非转译层崩溃 |
+| 鏄庢棩鏂硅垷 | `com.hypergryph.arknights` | 鉁?鍙繍琛?| 淇 鈶?libvulkan API36 绗﹀彿锛坺ygote 棰勮浇锛夛紱鈶?berberis `HandleNoExec` host-call 琛ヤ竵锛圲8SDK libsmsdk 娣锋穯浠ｇ爜鐩存帴璋冪敤 host 搴?`libnativebridge::NativeBridgeError`锛夈€傚疄娴嬭繍琛?5+ 鍒嗛挓杩涘叆娓告垙閫昏緫锛堟洿鏂版湇鍔″櫒鏌ヨ鎴愬姛锛?|
+| 鐜嬭€呰崳鑰€ | `com.tencent.tmgp.sgame` | 鉂?寰呴€傞厤 | `Guest call didn't restore sp`锛坆erberis guest-call 鏍堟寚閽堟仮澶嶆牎楠屽け璐ワ紝鏈熸湜/瀹為檯宸?0x10锛夈€傚凡鎺ㄨ繘鍒?GCloudCore/TDM/MSDK/Apollo 鍒濆鍖栧畬鎴?|
+| Minecraft | `com.mojang.minecraftpe` | 鉂?寰呴€傞厤 | 瀹夸富 SIGSEGV(SEGV_ACCERR) 鎵ц `libminecraftpe.so` 鍙涓嶅彲鎵ц娈碉紙offset 0x720bef4锛夛紝鍙戠敓鍦?SwappyDisplayManager锛堜氦鎹㈤摼锛夊垵濮嬪寲鍚?|
+| 鍜屽钩绮捐嫳 | `com.tencent.tmgp.pubgmhd` | 鉂?寰呴€傞厤 | 涓昏繘绋嬮潤榛?~22s 鍚?**clean exit(0)**锛堝瓙杩涚▼ SIGABRT锛夛紝鐤戜技鍙嶄綔寮?妯℃嫙鍣ㄦ娴嬪悗鑷粓姝紝闈炶浆璇戝眰宕╂簝 |
 
-**结论**：每款游戏的问题机制不同（NoExec 直呼 host / guest-call 栈校验 / 宿主执行违例 / 反作弊检测），都需要单独分析、单独打补丁。**欢迎社区开发者针对单款游戏提供复现、分析、补丁。**
+**缁撹**锛氭瘡娆炬父鎴忕殑闂鏈哄埗涓嶅悓锛圢oExec 鐩村懠 host / guest-call 鏍堟牎楠?/ 瀹夸富鎵ц杩濅緥 / 鍙嶄綔寮婃娴嬶級锛岄兘闇€瑕佸崟鐙垎鏋愩€佸崟鐙墦琛ヤ竵銆?*娆㈣繋绀惧尯寮€鍙戣€呴拡瀵瑰崟娆炬父鎴忔彁渚涘鐜般€佸垎鏋愩€佽ˉ涓併€?*
 
-## 🤝 社区协作
+## 馃 绀惧尯鍗忎綔
 
-- 本系统由爱好者为个人 Surface Pro 9 定制，**非商业项目、无官方支持**。
-- 欢迎提交：
-  - 单款游戏的兼容性补丁（含复现日志、tombstone、berberis trace）
-  - 新设备移植（需自行适配，当前未测试其它设备）
-  - bug 报告 / 定位 / 修复 PR
-- 问题请带：设备型号、ISO 版本号、`logcat` 崩溃段、`/data/tombstones`、`getprop ro.build.display.id`。
+- 鏈郴缁熺敱鐖卞ソ鑰呬负涓汉 Surface Pro 9 瀹氬埗锛?*闈炲晢涓氶」鐩€佹棤瀹樻柟鏀寔**銆?- 娆㈣繋鎻愪氦锛?  - 鍗曟娓告垙鐨勫吋瀹规€цˉ涓侊紙鍚鐜版棩蹇椼€乼ombstone銆乥erberis trace锛?  - 鏂拌澶囩Щ妞嶏紙闇€鑷閫傞厤锛屽綋鍓嶆湭娴嬭瘯鍏跺畠璁惧锛?  - bug 鎶ュ憡 / 瀹氫綅 / 淇 PR
+- 闂璇峰甫锛氳澶囧瀷鍙枫€両SO 鐗堟湰鍙枫€乣logcat` 宕╂簝娈点€乣/data/tombstones`銆乣getprop ro.build.display.id`銆?
+## 鏋勫缓鍘熺悊
 
-## 构建原理
+- 鏋勫缓鏈猴紙192.168.31.159, Ubuntu 24.04, 64 鏍?47GB锛夋寕杞?GitHub self-hosted runner
+- workflow 鍚屾 **12 涓?meowhuan fork 琛ヤ竵浠撳簱**锛堚殸锔?蹇呴』鐢?fork锛歋urface 瀹氬埗鍙瓨鍦ㄤ簬 fork锛孊lissOS 涓婃父浠撳簱娌℃湁锛夆啋 搴旂敤 `game-compat` 鐑慨 鈫?`make blissify iso_img -j32` 鈫?libvulkan API36 琛ユ晳 鈫?`gh release` 鍙戝竷 ISO
 
-- 构建机（192.168.31.159, Ubuntu 24.04, 64 核/47GB）挂载 GitHub self-hosted runner
-- workflow 同步 **12 个 meowhuan fork 补丁仓库**（⚠️ 必须用 fork：Surface 定制只存在于 fork，BlissOS 上游仓库没有）→ 应用 `game-compat` 热修 → `make blissify iso_img -j32` → libvulkan API36 补救 → `gh release` 发布 ISO
-
-### 补丁仓库（meowhuan 账户，分支 `r12e-meowhuan`）
-
-| 仓库 | 内容 |
+### 琛ヤ竵浠撳簱锛坢eowhuan 璐︽埛锛屽垎鏀?`r12e-meowhuan`锛?
+| 浠撳簱 | 鍐呭 |
 |---|---|
-| device_generic_common | ssam 充电、lid_monitor、iptsd、init.sh、蓝牙等设备层 |
-| kernel_common（`r12e-meowhuan`） | IPU6 相机、MAP_32BIT 4GiB、DRRS、ov5693 |
-| frameworks/base | config_useAutoSuspend、SystemUI 侧滑 |
-| iptsd | 触摸驱动修复 |
-| vendor/bliss、build/soong | min_sdk、署名 |
-| Blissify / BlissSystemUI / BlissUpdater / LMOFreeform / paranoidsense / Launcher3 | 汉化 |
-| **blissos-surface-build（本仓库）** | 构建工作流 + game-compat 热修产物 + 文档 |
+| device_generic_common | ssam 鍏呯數銆乴id_monitor銆乮ptsd銆乮nit.sh銆佽摑鐗欑瓑璁惧灞?|
+| kernel_common锛坄r12e-meowhuan`锛?| IPU6 鐩告満銆丮AP_32BIT 4GiB銆丏RRS銆乷v5693 |
+| frameworks/base | config_useAutoSuspend銆丼ystemUI 渚ф粦 |
+| iptsd | 瑙︽懜椹卞姩淇 |
+| vendor/bliss銆乥uild/soong | min_sdk銆佺讲鍚?|
+| Blissify / BlissSystemUI / BlissUpdater / LMOFreeform / paranoidsense / Launcher3 | 姹夊寲 |
+| **blissos-surface-build锛堟湰浠撳簱锛?* | 鏋勫缓宸ヤ綔娴?+ game-compat 鐑慨浜х墿 + 鏂囨。 |
 
-## game-compat（游戏热修）
+## game-compat锛堟父鎴忕儹淇級
 
-见 [`game-compat/README.md`](game-compat/README.md)。当前包含：
-- `libndk_translation.so`（0.2.4 host-call 补丁，解决明日方舟）
-- `libvulkan.so.api36`（Vulkan 1.4 符号）
+瑙?[`game-compat/README.md`](game-compat/README.md)銆傚綋鍓嶅寘鍚細
+- `libndk_translation.so`锛?.2.4 host-call 琛ヤ竵锛岃В鍐虫槑鏃ユ柟鑸燂級
+- `libvulkan.so.api36`锛圴ulkan 1.4 绗﹀彿锛?
+## 閮ㄧ讲姝ラ锛堜竴娆℃€э級
 
-## 部署步骤（一次性）
-
-### 1. 构建机注册 runner
-GitHub 网页 → 本仓库 → Settings → Actions → Runners → New self-hosted runner（Linux x64）。
-在构建机执行（代理需可用）：
+### 1. 鏋勫缓鏈烘敞鍐?runner
+GitHub 缃戦〉 鈫?鏈粨搴?鈫?Settings 鈫?Actions 鈫?Runners 鈫?New self-hosted runner锛圠inux x64锛夈€?鍦ㄦ瀯寤烘満鎵ц锛堜唬鐞嗛渶鍙敤锛夛細
 ```bash
 cd ~ && mkdir actions-runner && cd actions-runner
-# <粘贴 GitHub 页面给的下载与解压命令>
+# <绮樿创 GitHub 椤甸潰缁欑殑涓嬭浇涓庤В鍘嬪懡浠?
 ./config.sh --url https://github.com/meowhuan/blissos-surface-build --token <RUNNER_TOKEN> --labels blissos-build --name blissos-builder
 sudo ./svc.sh install && sudo ./svc.sh start
 ```
 
-### 2. 触发构建
-Actions → Build BlissOS Surface ISO → Run workflow → 选变体 + 版本名。
-完成后 ISO 在 Release 页。
-
-## 本地拉取指令（构建成功后手动）
-```powershell
-scp -i C:\Users\Meowhuan\.ssh\PRTS-Ubuntu meowhuan@192.168.31.159:/home/meowhuan/blissos/out/target/product/x86_64/<ISO文件名> F:\temp\
-Get-FileHash F:\temp\<ISO文件名> -Algorithm SHA256
+### 2. 瑙﹀彂鏋勫缓
+Actions 鈫?Build BlissOS Surface ISO 鈫?Run workflow 鈫?閫夊彉浣?+ 鐗堟湰鍚嶃€?瀹屾垚鍚?ISO 鍦?Release 椤点€?
+## 鏈湴鎷夊彇鎸囦护锛堟瀯寤烘垚鍔熷悗鎵嬪姩锛?```powershell
+scp -i C:\Users\Meowhuan\.ssh\PRTS-Ubuntu meowhuan@192.168.31.159:/home/meowhuan/blissos/out/target/product/x86_64/<ISO鏂囦欢鍚? F:\temp\
+Get-FileHash F:\temp\<ISO鏂囦欢鍚? -Algorithm SHA256
 ```
 
-## 装机注意事项
-- 已装机 7GB system 分区的设备必须先扩分区到 8GiB（sgdisk 扩容 + resize2fs）
-- ISO >4GB 时 FAT32 U 盘写不了，用 exFAT/NTFS
-- system.img 8GiB 顶格零余量，加包前先评估
-- 装机/升级后**必须完整重启一次**（zygote 预载 host libvulkan，否则游戏兼容热修不生效）
+## 瑁呮満娉ㄦ剰浜嬮」
+- 宸茶鏈?7GB system 鍒嗗尯鐨勮澶囧繀椤诲厛鎵╁垎鍖哄埌 8GiB锛坰gdisk 鎵╁ + resize2fs锛?- ISO >4GB 鏃?FAT32 U 鐩樺啓涓嶄簡锛岀敤 exFAT/NTFS
+- system.img 8GiB 椤舵牸闆朵綑閲忥紝鍔犲寘鍓嶅厛璇勪及
+- 瑁呮満/鍗囩骇鍚?*蹇呴』瀹屾暣閲嶅惎涓€娆?*锛坺ygote 棰勮浇 host libvulkan锛屽惁鍒欐父鎴忓吋瀹圭儹淇笉鐢熸晥锛?

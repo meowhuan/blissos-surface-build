@@ -1,23 +1,16 @@
-# game-compat（游戏兼容性热修）
+# game-compat锛堟父鎴忓吋瀹规€х儹淇級
 
-本目录存放为让游戏在 BlissOS Surface 定制版上运行而做的**二进制热修**。当前仅针对 **Surface Pro 9** 验证。
+鏈洰褰曞瓨鏀句负璁╂父鎴忓湪 BlissOS Surface 瀹氬埗鐗堜笂杩愯鑰屽仛鐨?*浜岃繘鍒剁儹淇?*銆傚綋鍓嶄粎閽堝 **Surface Pro 9** 楠岃瘉銆?
+## 鏂囦欢
 
-## 文件
-
-| 文件 | 作用 | 来源 / md5 |
+| 鏂囦欢 | 浣滅敤 | 鏉ユ簮 / md5 |
 |---|---|---|
-| `libndk_translation.so` | ndk_translation 0.2.4 的 `berberis_HandleNoExec` 二进制补丁：guest 代码调用 host 地址时改为执行 host call 并返回，不再 SIGSEGV（解决明日方舟 U8SDK 崩溃） | 原版 md5 `0410f2e3…` → 补丁版 `d986d236…` |
-| `libvulkan.so.api36` | API36 模拟器 host `libvulkan.so`（含 Vulkan 1.4 符号），替换 Android 15 自带的 API35 版，满足 0.2.4 proxy 的符号需求 | md5 `59fb1c2b…`（223616B） |
+| `libndk_translation.so` | ndk_translation 0.2.4 鐨?`berberis_HandleNoExec` 浜岃繘鍒惰ˉ涓侊細guest 浠ｇ爜璋冪敤 host 鍦板潃鏃舵敼涓烘墽琛?host call 骞惰繑鍥烇紝涓嶅啀 SIGSEGV锛堣В鍐虫槑鏃ユ柟鑸?U8SDK 宕╂簝锛?| 鍘熺増 md5 `0410f2e3鈥 鈫?琛ヤ竵鐗?`d986d236鈥 |
+| `libvulkan.so.api36` | API36 妯℃嫙鍣?host `libvulkan.so`锛堝惈 Vulkan 1.4 绗﹀彿锛夛紝鏇挎崲 Android 15 鑷甫鐨?API35 鐗堬紝婊¤冻 0.2.4 proxy 鐨勭鍙烽渶姹?| md5 `59fb1c2b鈥锛?23616B锛?|
 
-## 应用方式
+## 搴旂敤鏂瑰紡
 
-- **libndk 补丁**：构建前运行 `scripts/apply_game_compat.sh`（会覆盖 vendor prebuilt）。
-- **libvulkan**：完整 `make` 之后会回退成 API35，必须**构建后补救**：把 `libvulkan.so.api36` 复制到
-  `out/target/product/x86_64/system/lib64/libvulkan.so` 与 `obj/PACKAGING/target_files_intermediates/bliss_x86_64-target_files/SYSTEM/lib64/libvulkan.so`，
-  再带 `BOARD_IS_SURFACE_BUILD=true make iso_img`。详见 README「构建」一节与 `build.yml`。
+- **libndk 琛ヤ竵**锛氭瀯寤哄墠杩愯 `scripts/apply_game_compat.sh`锛堜細瑕嗙洊 vendor prebuilt锛夈€?- **libvulkan**锛氬畬鏁?`make` 涔嬪悗浼氬洖閫€鎴?API35锛屽繀椤?*鏋勫缓鍚庤ˉ鏁?*锛氭妸 `libvulkan.so.api36` 澶嶅埗鍒?  `out/target/product/x86_64/system/lib64/libvulkan.so` 涓?`obj/PACKAGING/target_files_intermediates/bliss_x86_64-target_files/SYSTEM/lib64/libvulkan.so`锛?  鍐嶅甫 `BOARD_IS_SURFACE_BUILD=true make iso_img`銆傝瑙?README銆屾瀯寤恒€嶄竴鑺備笌 `build.yml`銆?
+## 绾︽潫
 
-## 约束
-
-- 两个补丁都**绑定具体 0.2.4 二进制**（偏移固定）；升级 ndk_translation 需重新打补丁。
-- 装机/升级后**必须完整重启一次**（zygote 启动时预载 host libvulkan，不重启不生效）。
-- 仅验证：明日方舟可运行 5+ 分钟进入游戏逻辑；其它应用/游戏按"逐游戏适配"对待（见仓库 README）。
+- 涓や釜琛ヤ竵閮?*缁戝畾鍏蜂綋 0.2.4 浜岃繘鍒?*锛堝亸绉诲浐瀹氾級锛涘崌绾?ndk_translation 闇€閲嶆柊鎵撹ˉ涓併€?- 瑁呮満/鍗囩骇鍚?*蹇呴』瀹屾暣閲嶅惎涓€娆?*锛坺ygote 鍚姩鏃堕杞?host libvulkan锛屼笉閲嶅惎涓嶇敓鏁堬級銆?- 浠呴獙璇侊細鏄庢棩鏂硅垷鍙繍琛?5+ 鍒嗛挓杩涘叆娓告垙閫昏緫锛涘叾瀹冨簲鐢?娓告垙鎸?閫愭父鎴忛€傞厤"瀵瑰緟锛堣浠撳簱 README锛夈€?
