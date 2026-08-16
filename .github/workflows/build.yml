@@ -85,7 +85,8 @@ jobs:
           else
             echo "!! libvulkan is API35, applying API36 recovery..."
             cp "$GC" out/target/product/x86_64/system/lib64/libvulkan.so
-            cp "$GC" obj/PACKAGING/target_files_intermediates/bliss_x86_64-target_files/SYSTEM/lib64/libvulkan.so
+            TF=out/target/product/x86_64/obj/PACKAGING/target_files_intermediates/bliss_x86_64-target_files/SYSTEM/lib64
+            cp "$GC" "$TF/libvulkan.so"
             export BOARD_IS_SURFACE_BUILD=true
             export ANDROID_USE_NDK_TRANSLATION=true
             . build/envsetup.sh && lunch bliss_x86_64-ap4a-userdebug < /dev/null
