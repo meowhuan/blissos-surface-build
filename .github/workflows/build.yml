@@ -111,12 +111,15 @@ jobs:
           SHA256=$(sha256sum "$ISO" | cut -d' ' -f1)
           echo "SHA256=$SHA256"
           VER=${{ inputs.version }}
+          cat > /tmp/release_notes.md <<EOF
+          variant: ${{ inputs.variant }}
+          ISO: $ISO
+          SHA256: $SHA256
+          Build time: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          NOTE: Surface Pro 9 only; per-game adaptation (see repo README)
+          EOF
           gh release create "$VER" "$ISO" \
             --repo meowhuan/blissos-surface-build \
             --title "BlissOS Surface ${{ inputs.variant }} $VER" \
-            --notes "variant: ${{ inputs.variant }}
-ISO: $ISO
-SHA256: $SHA256
-Build time: $(date -u +%Y-%m-%dT%H:%M:%SZ)
-NOTE: Surface Pro 9 only; per-game adaptation (see repo README)" || true
+            --notes-file /tmp/release_notes.md || true
           ls -la "$ISO"
