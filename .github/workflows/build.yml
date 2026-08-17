@@ -134,17 +134,26 @@ jobs:
           [ -n "$ISO" ] || { echo "No ISO found, abort publish"; exit 1; }
           RUN_NUM="${{ github.run_number }}"
           VER="${{ inputs.version }}"
-          REMOTE="meowhuan@frs.sourceforge.net:/home/frs/project/blissos-surface-build/${RUN_NUM}-${VER}/"
-          SF_RSH="ssh -i /home/meowhuan/.ssh/id_ed25519 -o ProxyCommand='nc -x 192.168.31.32:7890 %h %p' -o StrictHostKeyChecking=no -o ConnectTimeout=30"
-          echo "Publishing to $REMOTE"
+          REMOTE_DIR="/home/frs/project/blissos-surface-build/${RUN_NUM}-${VER}"
+          SF_PROXY="nc -x 192.168.31.32:7890 %h %p"
+          SF_OPT="-o ProxyCommand='$SF_PROXY' -o StrictHostKeyChecking=no -o ConnectTimeout=30"
+          echo "Publishing to $REMOTE_DIR"
           echo "run_number=$RUN_NUM version=$VER"
-          rsync -avzP --mkpath -e "$SF_RSH" "$ISO" "$REMOTE"
-          if [ -n "$OTA" ]; then
-            echo "Publishing OTA: $OTA"
-            rsync -avzP --mkpath -e "$SF_RSH" "$OTA" "$REMOTE"
-          else
-            echo "No OTA zip found, skipping"
-          fi
+          # SourceForge FRS restricted shell: only file copy via sftp/scp/rsync.
+          # Directories must exist before upload, so create per-run dir first via sftp.
+          {
+            echo "cd /home/frs/project/blissos-surface-build"
+            echo "mkdir ${RUN_NUM}-${VER}"
+            echo "cd ${RUN_NUM}-${VER}"
+            echo "put \"$ISO\""
+            if [ -n "$OTA" ]; then
+              echo "put \"$OTA\""
+            fi
+            echo "quit"
+          } > /tmp/sf_upload_batch.txt
+          eval "sftp $SF_OPT -i /home/meowhuan/.ssh/id_ed25519 -b /tmp/sf_upload_batch.txt meowhuan@frs.sourceforge.net"
           echo "=== PUBLISH COMPLETE (run #$RUN_NUM, $VER) ==="
           echo "ISO: $ISO"
           echo "SHA256: $(sha256sum "$ISO" | cut -d' ' -f1)"
+          echo "remote dir: $REMOTE_DIR"
+          echo "download base: https://downloads.sourceforge.net/project/blissos-surface-build/${RUN_NUM}-${VER}/"
