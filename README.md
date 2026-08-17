@@ -1,45 +1,63 @@
-# BlissOS Surface Pro 9 瀹氬埗鐗?
-闈㈠悜 **Microsoft Surface Pro 9** 瀹氬埗鐨?BlissOS锛圓ndroid-x86锛夌郴缁熼暅鍍忋€傜敱鐖卞ソ鑰呬釜浜虹淮鎶ゃ€?
-> 鈿狅笍 **浠呴拡瀵?Surface Pro 9 閫傞厤銆傚叾瀹冭澶囧潎鏈祴璇曪紝璇峰嬁鍦ㄩ潪 SP9 璁惧涓婂畨瑁呫€?*
+# BlissOS Surface Pro 9 定制版
 
-## 涓嬭浇
+面向 **Microsoft Surface Pro 9** 定制的 BlissOS（Android-x86）系统镜像。由爱好者个人维护。
 
-闀滃儚鍙戝竷鍦?**SourceForge**锛?
-- 椤圭洰椤碉細<https://sourceforge.net/projects/blissos-surface-build/>
-- 鏂囦欢鍒楄〃锛?https://sourceforge.net/projects/blissos-surface-build/files/>
-- r12k 鐩撮摼锛?https://downloads.sourceforge.net/project/blissos-surface-build/r12k/Bliss-Surface-v18.4-x86_64-UNOFFICIAL-vanilla-20260816-r12k.iso>
+> ⚠️ **仅针对 Surface Pro 9 适配。其它设备均未测试，请勿在非 SP9 设备上安装。**
 
-鍙戝竷鐗堬紙vanilla锛塖HA256锛?
-| 鐗堟湰 | SHA256 |
+## 下载
+
+镜像发布在 **SourceForge**：
+
+- 项目页：<https://sourceforge.net/projects/blissos-surface-build/>
+- 文件列表：<https://sourceforge.net/projects/blissos-surface-build/files/>
+- r12k 直链：<https://downloads.sourceforge.net/project/blissos-surface-build/r12k/Bliss-Surface-v18.4-x86_64-UNOFFICIAL-vanilla-20260816-r12k.iso>
+
+发布版（vanilla）SHA256：
+
+| 版本 | SHA256 |
 |---|---|
 | r12k (2026-08-16, vanilla) | `1a7ec872c9ecfa26c9032365d97753c3806d55cec7e0f5d0fc2aff070f7676d5` |
 
-## 宸查€傞厤鐨勫姛鑳?
-- 鍏呯數鑷?100%锛堢鐢?EC Smart Charging锛?- 钃濈墮銆乄i-Fi
-- 鐩掔洊鐔勫睆 / 寮€鐩栦寒灞?/ 鏅鸿兘浼戠湢锛堟挱鏀鹃煶涔愪笉鐫★級
-- 閿佸睆瀵嗙爜锛圙atekeeper锛?- 瑙︽懜锛堝惈 Surface 瑙︽帶绗斻€乀ype Cover锛?- 鐩告満锛堝墠鎽?OV5693 宸插嚭甯э級
-- 閫氳繃 ndk_translation锛坆erberis锛夎浆璇戝眰杩愯 arm64 搴旂敤
+## 已适配的功能
 
-## 馃幃 娓告垙鍏煎鎬э紙鎸?閫愭父鎴忛€傞厤"锛?
-鏈郴缁熸病鏈?涓€濂楄浆璇戝眰閫氬悆鎵€鏈夋父鎴?鐨勯摱寮广€傛瘡娆?arm64 娓告垙閮藉彲鑳藉湪杞瘧灞備笂閬囧埌鍚勮嚜涓嶅悓鐨勫吋瀹规€ч棶棰橈紝闇€瑕侀€愭父鎴忓崟鐙€傞厤銆傚綋鍓嶅疄娴嬶細
+- 充电至 100%（禁用 EC Smart Charging）
+- 蓝牙、Wi-Fi
+- 盒盖熄屏 / 开盖亮屏 / 智能休眠（播放音乐不睡）
+- 锁屏密码（Gatekeeper）
+- 触摸（含 Surface 触控笔、Type Cover）
+- 相机（前摄 OV5693 已出帧）
+- 通过 ndk_translation（berberis）转译层运行 arm64 应用
 
-| 娓告垙 | 鐘舵€?| 璇存槑 |
+## 🎮 游戏兼容性（按"逐游戏适配"）
+
+本系统没有"一套转译层通吃所有游戏"的银弹。每款 arm64 游戏都可能在转译层上遇到各自不同的兼容性问题，需要逐游戏单独适配。当前实测：
+
+| 游戏 | 状态 | 说明 |
 |---|---|---|
-| 鏄庢棩鏂硅垷 | 鉁?鍙繍琛?| 淇 libvulkan 绗﹀彿 + berberis host-call 鐩村懠锛圲8SDK 娣锋穯灞傚弽妯℃嫙妫€娴嬶級 |
-| 鐜嬭€呰崳鑰€ | 鉂?寰呴€傞厤 | berberis guest-call 鏍堟寚閽堟仮澶嶆牎楠屽け璐?|
-| Minecraft | 鉂?寰呴€傞厤 | 鎵ц杩濅緥锛堣繘鍏ヨ嚜韬彧璇绘锛夛紝浜ゆ崲閾惧垵濮嬪寲鍚庡穿婧?|
-| 鍜屽钩绮捐嫳 | 鉂?寰呴€傞厤 | 鍙嶄綔寮?妯℃嫙鍣ㄦ娴嬪悗鑷粓姝紙绛栫暐灞傞棶棰橈級 |
+| 明日方舟 | ✅ 可运行 | 修复 libvulkan 符号 + berberis host-call 直呼（U8SDK 混淆层反模拟检测） |
+| 王者荣耀 | ❌ 待适配 | berberis guest-call 栈指针恢复校验失败 |
+| Minecraft | ❌ 待适配 | 执行违例（进入自身只读段），交换链初始化后崩溃 |
+| 和平精英 | ❌ 待适配 | 反作弊/模拟器检测后自终止（策略层问题） |
 
-**缁撹**锛氭瘡娆炬父鎴忛棶棰樻満鍒朵笉鍚岋紝閮介渶瑕佸崟鐙垎鏋愩€佸崟鐙墦琛ヤ竵銆傛杩庣ぞ鍖哄紑鍙戣€呴拡瀵瑰崟娆炬父鎴忔彁渚涘鐜般€佸垎鏋愩€佽ˉ涓併€?
-## 馃 绀惧尯鍗忎綔
+**结论**：每款游戏问题机制不同，都需要单独分析、单独打补丁。欢迎社区开发者针对单款游戏提供复现、分析、补丁。
 
-- 鏈郴缁熺敱鐖卞ソ鑰呬负涓汉 Surface Pro 9 瀹氬埗锛?*闈炲晢涓氶」鐩€佹棤瀹樻柟鏀寔**銆?- 娆㈣繋鎻愪氦锛?  - 鍗曟娓告垙鐨勫吋瀹规€цˉ涓侊紙鍚鐜版棩蹇椼€乼ombstone锛?  - 鏂拌澶囩Щ妞嶏紙闇€鑷閫傞厤锛屽綋鍓嶆湭娴嬭瘯鍏跺畠璁惧锛?  - bug 鎶ュ憡 / 瀹氫綅 / 淇
-- 闂璇峰甫锛氳澶囧瀷鍙枫€両SO 鐗堟湰銆佸穿婧冩棩蹇楋紙logcat / tombstones锛夈€乣ro.build.display.id`銆?
-## 瑁呮満娉ㄦ剰浜嬮」
+## 🤝 社区协作
 
-- ISO >4GB 鏃?FAT32 U 鐩樺啓涓嶄簡锛岀敤 exFAT/NTFS
-- 宸茶鏈?7GB system 鍒嗗尯鐨勮澶囬渶鍏堟墿鍒嗗尯鍒?8GiB锛堥暅鍍忎负 8GiB锛?- 瑁呮満/鍗囩骇鍚庡缓璁畬鏁撮噸鍚竴娆★紙閮ㄥ垎绯荤粺搴撳湪鍚姩鏃堕杞斤級
+- 本系统由爱好者为个人 Surface Pro 9 定制，**非商业项目、无官方支持**。
+- 欢迎提交：
+  - 单款游戏的兼容性补丁（含复现日志、tombstone）
+  - 新设备移植（需自行适配，当前未测试其它设备）
+  - bug 报告 / 定位 / 修复
+- 问题请带：设备型号、ISO 版本、崩溃日志（logcat / tombstones）、`ro.build.display.id`。
 
-## 鎶€鏈儗鏅紙绠€杩帮級
+## 装机注意事项
 
-- 鍩虹锛欱lissOS锛圓ndroid-x86 / BlissRoms锛夛紝Android 15锛屽唴鏍?6.6锛堝惈 IPU6 鐩告満銆丮AP_32BIT 4GiB 绛?Surface 閫傞厤锛?- 杞瘧灞傦細ndk_translation 0.2.4锛坅rm64 鈫?x86_64锛?- 璇︾粏寮€鍙戣褰曚笌宸茬煡闂瑙侀」鐩?Issue 鍖?
+- ISO >4GB 时 FAT32 U 盘写不了，用 exFAT/NTFS
+- 已装机 7GB system 分区的设备需先扩分区到 8GiB（镜像为 8GiB）
+- 装机/升级后建议完整重启一次（部分系统库在启动时预载）
+
+## 技术背景（简述）
+
+- 基础：BlissOS（Android-x86 / BlissRoms），Android 15，内核 6.6（含 IPU6 相机、MAP_32BIT 4GiB 等 Surface 适配）
+- 转译层：ndk_translation 0.2.4（arm64 → x86_64）
+- 详细开发记录与已知问题见项目 Issue 区
