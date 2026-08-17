@@ -118,6 +118,33 @@ jobs:
           echo "SHA256=$SHA256"
           echo "full path: $(pwd)/$ISO"
           echo "Size: $(stat -c%s "$ISO") bytes"
+          echo "run_number=${{ github.run_number }}"
+          echo "version=${{ inputs.version }}"
           echo
-          echo "Public distribution happens on SourceForge (manual upload step, not part of this workflow)."
+          echo "Public distribution happens on SourceForge (upload in next step)."
           ls -la "$ISO"
+
+      - name: Publish to SourceForge
+        shell: bash
+        run: |
+          set -e
+          cd /home/meowhuan/blissos/out/target/product/x86_64
+          ISO=$(ls -t Bliss-*.iso | head -1)
+          OTA=$(ls -t Bliss-*.zip 2>/dev/null | head -1)
+          [ -n "$ISO" ] || { echo "No ISO found, abort publish"; exit 1; }
+          RUN_NUM="${{ github.run_number }}"
+          VER="${{ inputs.version }}"
+          REMOTE="meowhuan@frs.sourceforge.net:/home/frs/project/blissos-surface-build/${RUN_NUM}-${VER}/"
+          SF_RSH="ssh -i /home/meowhuan/.ssh/id_ed25519 -o ProxyCommand='nc -x 192.168.31.32:7890 %h %p' -o StrictHostKeyChecking=no -o ConnectTimeout=30"
+          echo "Publishing to $REMOTE"
+          echo "run_number=$RUN_NUM version=$VER"
+          rsync -avzP --mkpath -e "$SF_RSH" "$ISO" "$REMOTE"
+          if [ -n "$OTA" ]; then
+            echo "Publishing OTA: $OTA"
+            rsync -avzP --mkpath -e "$SF_RSH" "$OTA" "$REMOTE"
+          else
+            echo "No OTA zip found, skipping"
+          fi
+          echo "=== PUBLISH COMPLETE (run #$RUN_NUM, $VER) ==="
+          echo "ISO: $ISO"
+          echo "SHA256: $(sha256sum "$ISO" | cut -d' ' -f1)"
